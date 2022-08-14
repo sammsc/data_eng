@@ -8,9 +8,9 @@ time_table_drop = "DROP table IF EXISTS time"
 
 # CREATE TABLES
 
-songplay_table_create = ("""CREATE TABLE IF NOT EXISTS songplays (songplay_id int PRIMARY KEY, start_time timestamp NOT NULL, 
-                                                                user_id int NOT NULL, level varchar, song_id varchar, 
-                                                                artist_id varchar, session_id int, location varchar, user_agent varchar);
+songplay_table_create = ("""CREATE TABLE IF NOT EXISTS songplays (songplay_id SERIAL PRIMARY KEY, start_time timestamp NOT NULL REFERENCES time(start_time), 
+                                                                user_id int NOT NULL REFERENCES users(user_id), level varchar, song_id varchar REFERENCES songs(song_id), 
+                                                                artist_id varchar REFERENCES artists(artist_id), session_id int, location varchar, user_agent varchar);
 """)
 
 user_table_create = ("""CREATE TABLE IF NOT EXISTS users (user_id int PRIMARY KEY, first_name varchar, last_name varchar, gender varchar, level varchar);
@@ -30,11 +30,12 @@ time_table_create = ("""CREATE TABLE IF NOT EXISTS time (start_time timestamp PR
 
 # INSERT RECORDS
 
-songplay_table_insert = ("""INSERT INTO songplays (songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent) 
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+songplay_table_insert = ("""INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent) 
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
 """)
 
-user_table_insert = ("""INSERT INTO users (user_id, first_name, last_name, gender, level) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+user_table_insert = ("""INSERT INTO users (user_id, first_name, last_name, gender, level) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (user_id) 
+                        DO UPDATE SET (user_id, first_name, last_name, gender, level) = (EXCLUDED.user_id, EXCLUDED.first_name, EXCLUDED.last_name, EXCLUDED.gender, EXCLUDED.level)
 """)
 
 song_table_insert = ("""INSERT INTO songs (song_id, title, artist_id, year, duration) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
@@ -43,27 +44,16 @@ song_table_insert = ("""INSERT INTO songs (song_id, title, artist_id, year, dura
 artist_table_insert = ("""INSERT INTO artists (artist_id, name, location, latitude, longitude) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
 """)
 
-
 time_table_insert = ("""INSERT INTO time (start_time, hour, day, week, month, year, weekday) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
 """)
 
 # FIND SONGS
 
-# The query with JOIN ... ON should work, but I keep getting syntax error. WHY?????
-# ProgrammingError: syntax error at or near "ON"
-# LINE 1: ... song_id, songs.artist_id FROM songs JOIN artists ON songs.a...
-
-# song_select = ("""SELECT song_id, songs.artist_id FROM songs JOIN artists ON songs.artist_id=artists.artist_id
-#                         WHERE songs.title=%s AND artists.name=%s AND songs.duration=%s;
-# """)
-
-# This query a temp fix, should do the same
-song_select = ("""SELECT song_id, songs.artist_id 
-                FROM artists, songs 
-                WHERE songs.artist_id=artists.artist_id AND songs.title=%s AND artists.name=%s AND songs.duration=%s;
+song_select = ("""SELECT song_id, songs.artist_id FROM songs JOIN artists ON songs.artist_id=artists.artist_id
+                    WHERE songs.title=%s AND artists.name=%s AND songs.duration=%s;
 """)
 
 # QUERY LISTS
 
-create_table_queries = [songplay_table_create, user_table_create, song_table_create, artist_table_create, time_table_create]
+create_table_queries = [user_table_create, song_table_create, artist_table_create, time_table_create, songplay_table_create]
 drop_table_queries = [songplay_table_drop, user_table_drop, song_table_drop, artist_table_drop, time_table_drop]
