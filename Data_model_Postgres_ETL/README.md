@@ -51,4 +51,4 @@ log_data/2018/11/2018-11-13-events.json
 ```
 #### File content
 
-![log-data](/log-data.png?raw=true "Log Data")
+![log-data](/Data_model_Postgres_ETL/log-data.png?raw=true "Log Data")
