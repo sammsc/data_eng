@@ -1,6 +1,5 @@
 import configparser
 
-
 # CONFIG
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
@@ -68,15 +67,6 @@ format as json 'auto ignorecase';
 
 # FINAL TABLES
 
-# songplay_table_insert = ("""INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent) 
-#                             SELECT timestamp 'epoch' + ts * interval '0.001 second' AS ts2, userId, level, song_id, artist_id, sessionId, location, userAgent 
-#                             FROM staging_events LEFT OUTER JOIN staging_songs 
-#                             ON (staging_events.song = staging_songs.title 
-#                             AND staging_events.artist = staging_songs.artist_name
-#                             AND staging_events.length = staging_songs.duration)
-#                             WHERE userId IS NOT NULL
-# """)
-
 songplay_table_insert = ("""INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent) 
                             SELECT timestamp 'epoch' + ts * interval '0.001 second' AS ts2, userId, level, song_id, artist_id, sessionId, location, userAgent 
                             FROM staging_events LEFT OUTER JOIN staging_songs 
@@ -99,14 +89,6 @@ artist_table_insert = ("""INSERT INTO artists (artist_id, name, location, latitu
                         SELECT DISTINCT artist_id, artist_name, artist_location, artist_latitude, artist_longitude FROM staging_songs 
 """)
 
-# time_table_insert = ("""INSERT INTO time (start_time, hour, day, week, month, year, weekday) 
-#                         SELECT DISTINCT timestamp 'epoch' + ts * interval '0.001 second' AS ts2, 
-#                         date_part(hour, ts2), date_part(day, ts2), date_part(week, ts2), 
-#                         date_part(month, ts2), date_part(year, ts2), date_part(dayofweek, ts2) 
-#                         FROM staging_events
-#                         WHERE userId IS NOT NULL
-# """)
-
 time_table_insert = ("""INSERT INTO time (start_time, hour, day, week, month, year, weekday) 
                         SELECT DISTINCT start_time, date_part(hour, start_time), date_part(day, start_time), date_part(week, start_time), 
                         date_part(month, start_time), date_part(year, start_time), date_part(dayofweek, start_time) 
@@ -118,5 +100,4 @@ time_table_insert = ("""INSERT INTO time (start_time, hour, day, week, month, ye
 create_table_queries = [staging_events_table_create, staging_songs_table_create, user_table_create, song_table_create, artist_table_create, time_table_create, songplay_table_create]
 drop_table_queries = [staging_events_table_drop, staging_songs_table_drop, songplay_table_drop, user_table_drop, song_table_drop, artist_table_drop, time_table_drop]
 copy_table_queries = [staging_events_copy, staging_songs_copy]
-# insert_table_queries = [songplay_table_insert, user_table_insert, song_table_insert, artist_table_insert, time_table_insert]
-insert_table_queries = [songplay_table_insert, time_table_insert]
+insert_table_queries = [songplay_table_insert, user_table_insert, song_table_insert, artist_table_insert, time_table_insert]
