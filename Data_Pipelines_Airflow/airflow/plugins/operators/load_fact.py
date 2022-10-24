@@ -28,3 +28,5 @@ class LoadFactOperator(BaseOperator):
         self.log.info(f"SQL: {self.sql}")
         redshift.run(self.sql)
         
+        self.log.info('LoadFactOperator done!')
+        

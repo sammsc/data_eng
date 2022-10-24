@@ -5,13 +5,13 @@ from airflow.contrib.hooks.aws_hook import AwsHook
 
 class StageToRedshiftOperator(BaseOperator):
     ui_color = '#358140'
-    template_fields = ("aws_credentials_id",)
     copy_sql = """
         COPY {}
         FROM '{}'
         ACCESS_KEY_ID '{}'
         SECRET_ACCESS_KEY '{}'
         JSON '{}'
+        REGION 'us-west-2'
     """
 
     @apply_defaults
@@ -57,6 +57,8 @@ class StageToRedshiftOperator(BaseOperator):
         
         self.log.info(f"SQL: {formatted_sql}")
         redshift.run(formatted_sql)
+        
+        self.log.info('StageToRedshiftOperator done!')
 
 
 

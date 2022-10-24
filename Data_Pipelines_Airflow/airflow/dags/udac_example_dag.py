@@ -6,9 +6,6 @@ from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
                                 LoadDimensionOperator, DataQualityOperator)
 from helpers import SqlQueries
 
-# AWS_KEY = os.environ.get('AWS_KEY')
-# AWS_SECRET = os.environ.get('AWS_SECRET')
-
 default_args = {
     'owner': 'udacity',
     'start_date': datetime(2019, 1, 12),
@@ -22,6 +19,7 @@ default_args = {
 dag = DAG('udac_example_dag',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
+          max_active_runs=1,
           schedule_interval='0 * * * *'
 #           schedule_interval=None
         )
@@ -36,7 +34,6 @@ stage_events_to_redshift = StageToRedshiftOperator(
     aws_credentials_id="aws_credentials",
     s3_bucket="udacity-dend",
     s3_key="log_data",
-#     s3_key="log_data/2018/11",
     json="s3://udacity-dend/log_json_path.json"
 )
 
@@ -92,30 +89,20 @@ load_time_dimension_table = LoadDimensionOperator(
     sql=SqlQueries.time_table_insert
 )
 
+checks = [
+  {'test_sql': "SELECT COUNT(*) FROM songs", 'expected_result': '0', 'comparison': '>'},
+  {'test_sql': "SELECT COUNT(*) FROM artists", 'expected_result': '24', 'comparison': '=='}
+]
+
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     dag=dag,
     redshift_conn_id="redshift",
-    sql="select count(*) from public.songs",
-    result=14896
+    checks=checks
 )
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
-
-start_operator >> stage_events_to_redshift
-start_operator >> stage_songs_to_redshift
-stage_events_to_redshift >> load_songplays_table
-stage_songs_to_redshift >> load_songplays_table
-
-load_songplays_table >> load_song_dimension_table
-load_songplays_table >> load_user_dimension_table
-load_songplays_table >> load_artist_dimension_table
-load_songplays_table >> load_time_dimension_table
-
-load_song_dimension_table >> run_quality_checks
-load_user_dimension_table >> run_quality_checks
-load_artist_dimension_table >> run_quality_checks
-load_time_dimension_table >> run_quality_checks
-
+start_operator >> [stage_events_to_redshift, stage_songs_to_redshift] >> load_songplays_table >> \
+[load_song_dimension_table, load_user_dimension_table, load_artist_dimension_table, load_time_dimension_table] >> \
 run_quality_checks >> end_operator
